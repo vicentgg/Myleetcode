@@ -107,3 +107,89 @@ const int &r = ci;     //用于声明引用的const都是底层const
 
 #### 类型别名
 
+```c++
+typedef double wages; // wages是double的同义词
+using SI = Sales_item;  // SI是Sales_item的同义词
+```
+
+#### auto类型说明符
+
+#### decltype类型指示符
+
+```c++
+auto v = v1 + v2;
+decltype(f()) sum = x;  //sum的类型就是函数f的返回类型
+```
+
+不调用函数f,  而是使用当调用发生时f的返回值类型作为sum的类型
+
+#### 预处理器
+
+确保头文件多次包含仍能安全工作的常用技术
+
+预处理器是在编译之前执行的一段程序，可以部分地改变我们所写的程序。之前已经用到了一项预处理功能#include，当预处理器看到#include标记时就会用指定的头文件的内容代替#include。
+
+#### 头文件保护符
+
+预处理变量有两种状态：已定义和未定义。#define指令把一个名字设定为预处理变量，另外两个指令则分别检查某个指定的预处理变量是否已经定义：#ifdef当且仅当变量已定义时为真，#ifndef当且仅当变量未定义时为真。一旦检查结果为真，则执行后续操作直至遇到#endif指令为止。
+
+```c++
+#ifndef SA
+#define SA
+...
+...
+#endif
+```
+
+### 字符串、向量和数组
+
+#### string
+
+* 初始化
+
+  ```c++
+  string s(10, 'c'); //内容cccccccccc
+  string s("value");
+  ```
+
+* 操作
+
+  ```c++
+  #include<cctype>
+  using namespace std;
+  char c;
+  isalnum(c); //数字或字母
+  isalpha(c); //字母
+  isdigit(c); //数字
+  islower(c); //小写
+  isupper(c); //大写
+  tolower(c); //改为小写
+  toupper(c); //改为大写
+  
+  //遍历
+  for(auto c : str) 
+      cout << c << endl;
+  ```
+
+#### vector
+
+vector是模板 并非类型
+
+* 初始化
+
+  ```c++
+  vector<T> v1; //空
+  vector<T> v2(v1); //v2包含v1的副本
+  vector<T> v2 = v1;
+  vector<T> v3(n, val);
+  vector<T> v4(n);
+  vector<T> v5{a,b,c ...}
+  vector<T> v5 = {a,b,c ...}
+  ```
+
+  
+
+#### 数组
+
+不能将数组的内容拷贝给其他数组作为其初始值，也不能用数组为其他数组赋值
+
