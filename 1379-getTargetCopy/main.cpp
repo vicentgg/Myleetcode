@@ -43,7 +43,7 @@ public:
                 original = original->left;
                 s2.push(cloned);
                 cloned = cloned->left;
-            }
+            } 
             else {
                 original = s1.top();
                 s1.pop();
