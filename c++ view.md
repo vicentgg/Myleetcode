@@ -39,7 +39,7 @@ p = const_cast<int*>(&a);
 
 几乎什么都可以转，比如将int转指针，可能会出问题，尽量少用；
 
-* 为什么不使用C++的强制转换？444444
+* 为什么不使用C++的强制转换？
 
 C++的强制转换表面上看起来功能强大什么都能转，但是转化不够明确，不能进行错误检查，容易出错。
 
@@ -394,17 +394,21 @@ C++的强制转换表面上看起来功能强大什么都能转，但是转化�
 * 起保护作用
 * 提高编译的效率
 
-### 23. unordered_map 与 unordered_set 的区别
+### 23. map与set
+
+* map与set都是基于红黑树（二叉排序树）
+
+### 24. unordered_map 与 unordered_set 的区别
 
 * 两者都是基于hashtable
 
-### 24. #include<filename.h> 和 #include "filename.h"
+### 25. #include<filename.h> 和 #include "filename.h"
 
 * 编译器从标准库路径开始搜索
 
 * 编译器从用户的工作路径开始搜索
 
-### 25. static的应用和作用
+### 26. static的应用和作用
 
 * 函数体内的static 变量的作用范围为该函数体， 不同于auto变量，该变量的内存只被分配一次，因此其值在下次调用时仍维持上次的值。
 
@@ -428,4 +432,33 @@ C++的强制转换表面上看起来功能强大什么都能转，但是转化�
 * 类中的static成员变量属于整个类所拥有， 对类的所有对象只有一份拷贝
 
 * 类中的static成员函数属于整个类所拥有， 这个函数不接受this指针， 因而只能访问类的static成员变量。
+
+### 27. stoi函数、to_string函数、atoi函数
+
+* to_string函数 将int、long、double等转化为string
+
+  ```c++
+  #include<string>
+  int a = 4;
+  double b = 3.14;
+  string s1 = to_string(a);
+  string s2 = to_string(b);
+  ```
+
+  
+
+* stoi函数 和 atoi函数将字符串转为int 
+
+  ```c++
+  string s1("1234567");
+  char* s2 = "1234567";
+  int a = stoi(s1);  //stoi 的形参为const string*
+  int b = atoi(s2);  //atoi 的形参为const char*
+  int c = atoi(s1.c_str()); //c_str()将const string* 转为 const char*
+  cout << a << endl;
+  cout << b << endl;
+  cout << c << endl;
+  ```
+
+  
 

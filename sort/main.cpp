@@ -4,6 +4,7 @@
 
 using namespace std;
 
+
 class Solution {
 public:
     //直接插入排序  稳定排序
@@ -137,7 +138,61 @@ public:
         }
     }
 
-    // 堆排序
+    // 堆排序 不稳定的排序
+    //1.调整堆
+    void HeadAdjust(vector<int>& nums, int k, int len) {
+        int temp = nums[k];
+
+        for(int i = 2*k + 1; i < len; i *= 2) {
+            if(i < len - 1 && nums[i+1] > nums[i]) i ++; //找到最大的那个子树
+            if(temp > nums[i]) break;
+            else {
+                nums[k] = nums[i];  //向下不断调整
+                k = i;
+            }
+        }
+        nums[k] = temp;
+    }
+    //2.建立初试堆
+    void BulidMaxHeap(vector<int>& nums, int len) {
+        for(int i = (len / 2) + 1; i >= 0; i --) {
+            HeadAdjust(nums, i, len);
+        }
+    }
+    //3.交换堆顶和堆底 调整堆 进行排序
+    void HeapSort(vector<int>& nums) {
+        int len = nums.size();
+        BulidMaxHeap(nums, len);
+        for(int i = len - 1; i > 0; i --) {
+            swap(nums[0], nums[i]);
+            HeadAdjust(nums, 0, i);
+        }
+        
+    }
+
+    //2路归并排序  稳定的排序
+    //1.合并两段有序子序列
+    void Merge(vector<int>& nums, int low, int mid, int high) {
+        //将nums两段[low, mid]和[mid+1, high]合并为有序
+        vector<int> cop(nums); //复制数组
+
+        int i, j, k;
+        for(i = low, j = mid + 1, k = i; i <= mid && j <= high; k ++) {
+            if(cop[i] <= cop[j]) nums[k] = cop[i ++];
+            else nums[k] = cop[j ++];
+        }
+        while(i <= mid) nums[k ++] = cop[i ++];
+        while(j <= high) nums[k ++] = cop[j ++];
+    }
+    //2.递归
+    void MergeSort(vector<int>& nums, int low, int high) {
+        if(low < high) {
+            int mid = (low + high) / 2;
+            MergeSort(nums, low, mid);
+            MergeSort(nums, mid+1, high);
+            Merge(nums, low, mid, high);
+        }
+    }
 
 
 };
@@ -156,7 +211,7 @@ int main(void) {
     Solution solution;
 
 
-    solution.InsertSortB(nums);
+    solution.MergeSort(nums, 0, nums.size() - 1);
 
     for(auto it : nums) {
         cout << it << " ";
