@@ -52,11 +52,27 @@ class Solution {
 
     //合并两个排序的链表  还是快慢指针
     ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
-        ListNode* low = nullptr;
-        ListNode* fast = nullptr;
+        //建立一个伪头节点
+        ListNode* dom = new ListNode(0);
+        ListNode* cur = dom;
 
-        
-    }
+        while (l1 && l2)
+        {
+            if(l1 ->val < l2 ->val) {
+                cur ->next = l1;
+                l1 = l1 ->next;
+            }
+            else {
+                cur ->next = l2;
+                l2 = l2 ->next;
+            }
+            cur = cur ->next;
+        }
+
+        cur ->next = (l1 != nullptr ? l1 : l2);
+
+        return dom ->next;
+    };
 
 };
 
