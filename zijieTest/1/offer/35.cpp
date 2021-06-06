@@ -75,9 +75,8 @@ public:
         while (cur != nullptr)
         {
             if(cur ->random) {
-                
+                cur ->next ->random = cur ->random ->next; //将新节点的random指针 连接到正确节点
             }
-            cur ->next ->random = cur ->random ->next; //将新节点的random指针 连接到正确节点
             cur = cur ->next ->next;
         }
         

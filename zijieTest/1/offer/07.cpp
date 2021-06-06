@@ -38,7 +38,7 @@ public:
          if(len == 0) return NULL;
 
          for(int i = 0; i < len; i ++) {
-             index[inorder[i]] = i;
+             index[inorder[i]] = i;  //
          }
 
          root = dfs(preorder, inorder, 0, len - 1, 0, len - 1);
