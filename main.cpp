@@ -95,7 +95,7 @@ int main() {
 		glGetProgramInfoLog(shaderProgram, 512, NULL, infolog);
 		std::cout << "ERROR::SHADER::PROGREM::LINKED_FAILED\n" << infolog << std::endl;
 	}
-	//删除着色器程序
+	//删除着色器
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 
