@@ -12,8 +12,6 @@ private:
 private:
     Singleton() {cout<<"start"<<endl;}
     ~Singleton() {cout<<"end"<<endl;}
-    Singleton(const Singleton&); //拷贝
-    Singleton& operator=(const Singleton&); //赋值
 private:
     class Deletor { //定义一个嵌套类
 	public:
@@ -32,7 +30,6 @@ public:
     }
 };
 
-//单例模式  
 class Normal {
 private:
     static int num;
@@ -43,6 +40,13 @@ public:
     Normal& operator=(const Normal&);
 };
 
+class Daily {
+public:
+    Daily() {cout << "d_s" << endl;}
+    ~Daily() {cout << "d_e" << endl;} 
+};
+
+
 Singleton* Singleton::ptr = nullptr;
 Singleton::Deletor Singleton::deletor;
 
@@ -50,12 +54,9 @@ int Normal::num = 1;
 
 
 int main(void) {
+    Normal te;
+    Daily da;
     Singleton* p = Singleton::getPtr(); //程序结束时 不会调用析构函数 会造成内存泄漏
     
-    Normal* a = new Normal();
-    delete a;
-
-    Normal te;
-
     return 0;
 }

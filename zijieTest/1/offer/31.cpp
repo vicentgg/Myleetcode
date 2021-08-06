@@ -27,5 +27,5 @@ public:
 };
 
 int main(void) {
-
+    
 }

@@ -12,13 +12,62 @@
 
   单例可以通过返回相同缓存对象的静态构建方法来识别。
 
-  1. 私有化构造函数
+  私有化构造函数
 
   2. 使用类的私有静态指针变量指向类的唯一实例
 
   3. 使用一个公有的静态方法获取该实例
 
+  ```c++
+  //懒汉模式
+  class Singleton {
+  private:
+      static Singleton* ptr;
   
+      class Deletor { //定义一个嵌套类 使用嵌套类防止内存泄漏
+  	public:
+  		~Deletor() {  
+  			if(Singleton::ptr != NULL)
+  				delete Singleton::ptr;
+  		}
+  	};
+  	static Deletor deletor;
+      //构造函数等
+      
+  public:
+      static Singleton* getPtr() {
+          if(ptr == NULL) {
+              ptr = new Singleton(); //会出现线程安全问题
+          }
+          return ptr;
+      }
+  };
+  Singleton* Singleton::ptr = nullptr;
+  Singleton::Deletor Singleton::deletor;
+  
+  //饿汉模式  没有线程安全问题 但是静态变量实例化 和调用静态函数的初始化顺序不确定 当调用函数时 会有可能得到一个空例
+  class Singleton {
+  private:
+      static Singleton instance;
+      //构造函数等
+  public:
+      static Singleton& getInstance() {
+          return instance;
+      }
+  }
+  Singleton Singleton::instance;
+  
+  //懒汉模式  无线程安全问题和初始化顺序问题
+  class Singleton {
+  private:
+      //构造函数等
+  public:
+      static Singleton& getInstance() {  
+          static Singleton instance;
+          return instance;
+      }
+  }
+  ```
 
      
 
@@ -26,7 +75,7 @@
 
 * 工厂模式：定义一个用于创建对象的接口，让子类决定实例化哪一个类。Factory Method 使一个类的实例化延迟到其子类。
 
-  适用于：当一个类不知道它所必须创建的对象的类的时候；当一个类希望由它的子类来指定它所创建的对象的时候；当类将创建对象的职责委托给多个帮助子类中的某一个，并且你希望将哪一个帮助子类是代理者这一信息局部化的时候。
+  适用于：当一个类不知道它所必须创建的对象的类的时候；当一个类希望由它的子类来指定它所创建的对象的时候；当类将创建对象的职责委托给多个帮助子类中的某一个，并且你希望将哪一个帮助子类是代理者这一信息局部化的时候。 
 
   
 
@@ -34,7 +83,7 @@
 
 * static_cast
 
-  static_cast（静态转换）本质上是c语言强制转换的替代品；
+  static_cast（静态转换）本质上是c语言强制转换的替代品，c++中的任何的隐式转换都是使用static_cast来实现的。
 
   另外还能用于基类和派生类之间指针或引用的转换；
   \- 进行上行转换（把派生类的指针或引用转换成基类表示），是安全的；
@@ -42,32 +91,57 @@
 
 ```c++
 char a = 'a';
-int b = static_cast<int>(a);//将char型数据转换成int型数据
+int b = static_cast<int>(a);//将char型数据转换成int型数据  用于基础数据类型之间的转换 这个安全性需要开发者维护。  没有类型检查
 
 //类指针或引用强制转换
-Base* bp = new Base();
-Derived* dp = static_cast<Derived*>(bp);//下行转换时不安全的
+Base* base = new Base();
+Derived* derived = static_cast<Derived*>(base);//将基类指针或引用转换成派生类表示  下行转换是不安全的  因为没有动态类型检查
 
-Derived* dp1 = new Derived();
-Base* bp1 = static_cast<Base>(dp1);//上行转换时安全的
+Derived* derived1 = new Derived();
+Base* base1 = static_cast<Base>(derived1);//将派生类的指针或引用转换成基类表示  上行转换是安全的 
 ```
 
 * const_cast
 
+  常量指针转化非常量的指针、常量引用转化非常量引用，并且仍然指向原来的对象。
+
+  const_cast一般用于修改指针。
+
 ```c++
 const int a = 5;
-int *p;
-p = const_cast<int*>(&a);
+int *p = &a; //因为a是常量  此时无法修改*p的值
+int *ptr = const_cast<int*>(p); //去除常量
+*ptr ++; //现在可以进行修改
 ```
 
-并没有在真正去除变量的const属性，去除了指针的const属性，间接修改
+​	并没有在真正去除变量的const属性，去除了指针的const属性，间接修改
 
 * dynamic_cast
 
-用于动态类型转换。只能用于含有虚函数的类，用于类层次间的向上和向下转化。只能转指针或引用。
+  用于动态类型转换。只能用于含有虚函数的类，用于类层次间的向上和向下转化。只能转指针或引用。
+
+  ```c++
+  Base* base = new Base();
+  Derived* derived = new Derived();
+  
+  Base* der2base = dynamic_cast<Base*>(derived); //这个成功转换 子类到基类的转换
+  Derived* base2der = dynamic_cast<Derived*>(base); //基类转换成子类 会在程序运行时进行动态类型检查  因为虚函数的存在 基类的指针指向子类 调用方法时只会顺着虚函数表找到子类的方法。通过虚函数的性质 就发现转换到的新类型不是原类型的子类 就会将其置为nullptr。
+  ```
+
+  
+
 * reinterpret_cast
 
-几乎什么都可以转，比如将int转指针，可能会出问题，尽量少用；
+  几乎什么都可以转，比如将int转指针，可能会出问题，尽量少用；
+
+  推荐使用的地方：指针转向足够大的整数类型。
+
+  ```c++
+  int *ptr = new int(123);
+  uint32_t pter_addr = reinterpret_cast<uint32_t>(ptr); //将指针ptr的地址的值 转换成了无符号int类型
+  ```
+
+  
 
 * 为什么不使用C++的强制转换？
 
@@ -172,7 +246,9 @@ C++的强制转换表面上看起来功能强大什么都能转，但是转化�
 
   **调用顺序与构造函数相反**
 
-  
+  生成多个对象时，构造函数按照生成顺序调用，析构函数相反， 相当于一个栈。
+
+  但是函数或main内存在静态对象时，一般为最后一个析构。
 
 * **赋值函数**
 
@@ -193,7 +269,7 @@ C++的强制转换表面上看起来功能强大什么都能转，但是转化�
 * 静态成员函数不具体作用与某个对象，只能访问静态成员，不能访问非静态成员变量
 
   ```c++
-  class C {
+   class C {
   private:
       int w,h;
       static int n1;  //静态成员变量
@@ -292,9 +368,15 @@ C++的强制转换表面上看起来功能强大什么都能转，但是转化�
 
   **构造函数可以重载，析构函数不可以重载。**
 
+  调用重载函数有三种可能的结果：
+
+  * 编译器找到一个与实参最佳匹配的函数，并生成调用该函数的代码
+  * 找不到任何一个函数与调用的实参匹配，编译器发出无匹配的错误信息
+  * 有多于一个函数可以匹配，发生错误，二义性调用
+
   
 
-* **虚函数：**(为了使基类指针 能够访问派生类的成员函数)  函数覆盖
+* **虚函数：**(为了使基类指针 能够访问派生类的成员函数)  函数覆盖 重写
 
   在基类中使用关键字**virtual**申明一个函数为虚函数，含义就 是该函数的功能可能将在某个派生类中定义或者在基类的基础上进行扩展。系统在运行阶段才能动态的决定该调用哪一个函数，实现了**动态的多态性**。
 
@@ -504,25 +586,33 @@ C++的强制转换表面上看起来功能强大什么都能转，但是转化�
 
      delete释放内存时：调用对象的析构函数；调用operator delete函数释放内存空间。
 
-  7. 对数组的处理
+  7. malloc和free的实现过程
+
+     * malloc采用内存池的方式，先申请大块内存作为堆区，然后将堆区分为多个内存块，以块作为内存管理的基本单位。
+     * 空闲存储空间以空闲链表的方式组织，每个块包含一个长度、一个指向下一块的指针以及指向自身存储空间的指针。
+     * 申请内存时，malloc会扫描空闲链表，直到首次找到一个足够大的块为止。
+     * 该块与请求的大小相符，直接将其从链表中移走并返回给用户，如果块过大，将该块的尾部空间分给用户，更新块的头部信息。
+     * 释放内存时，搜索空闲链表，找到可以插入被释放块的合适位置。如果与释放块相邻的一边为空闲块，直接合并为更大的块，减少内存碎片。
+
+  8. 对数组的处理
 
      new[]和delete[]
 
-  8. 是否可以被重载
-
+  9. 是否可以被重载
+  
      operator new和operator delete 可以被重载
-
-  9. 是否能够直观地重新分配内存
-
+  
+  10. 是否能够直观地重新分配内存
+  
      使用malloc分配的内存后，如果在使用过程中发现内存不足，可以使用realloc函数进行内存重新分配实现内存的扩充。realloc先判断当前的指针所指内存是否有足够的连续空间，如果有，原地扩大可分配的内存地址，并且返回原来的地址指针；如果空间不够，先按照新指定的大小分配空间，将原有数据从头到尾拷贝到新分配的内存区域，而后释放原来的内存区域。
-
+  
      new没有这样直观的配套设施来扩充内存。
   
 * delete和free的混用问题
 
   1. 当申请的空间是C++内置类型时，可以混用
 
-  2. 当申请的空间时自己定义类型时，
+  2. 当申请的空间是自己定义类型时，
 
      * 若没有析构函数，delete和malloc能够混用。
 
@@ -582,7 +672,7 @@ C++的强制转换表面上看起来功能强大什么都能转，但是转化�
 
   不确定使用的指针是不是被分享所有权的时候，默认选unique_ptr独占式所有权，因为unique_ptr效率比shared_ptr高，不需要维护引用计数和背后的控制块。当确定要被分享的时候可以转换成shared_ptr。
 
-  其实只要不涉及多线程的程序，不使用智能指针也没关系。
+  其实只要不涉及多线程的程序，不使用智能指针也没关系。	
 
   有必要使用shared_ptr的场景：
 
@@ -621,7 +711,7 @@ C++的强制转换表面上看起来功能强大什么都能转，但是转化�
 
 * map与set都是基于红黑树（二叉排序树）
 
-### 24. unordered_map 与 unordered_set 的区别
+### 24. unordered_map 与 unordered_set 
 
 * 两者都是基于hashtable
 
@@ -659,6 +749,8 @@ C++的强制转换表面上看起来功能强大什么都能转，但是转化�
 * 类中的static成员函数属于整个类所拥有， 这个函数不接受this指针， 因而只能访问类的static成员变量。
 
 * 类的static变量在类实例化之前就已经存在了，并且分配了内存。函数的static变量在执行此函数时进行初始化。
+
+  
 
 ### 27. stoi函数、to_string函数、atoi函数
 
@@ -810,12 +902,23 @@ C++的强制转换表面上看起来功能强大什么都能转，但是转化�
 
   当编译器在一个变量声明的时候，能够根据变量赋的值推断该变量的数据类型。
 
+  用auto声明的变量必须初始化
+
+  auto不允许与其他类型组合使用
+
+  函数和模板的参数不能声明为auto
+
   ```c++
   auto i = 1; // 自动推断i为int
   //定义容器的迭代器
   vector<int> vec(6,10);
   vector<int>::iterator iter = vec.iterator(); //传统方式
   auto iterAuto = vec.iterator(); //使用自动类型推断
+  
+  //定义在堆上的变量，使用了auto的表达式必须被初始化
+  int *p = new auto(0);
+  auto *p = new auto(2); 
+  auto p = new auto(3); //这个p自动变为了一个int*类型
   ```
 
 * 空指针常量nullptr
@@ -845,7 +948,20 @@ C++的强制转换表面上看起来功能强大什么都能转，但是转化�
 
   C++11虽然从语言上提供了支持线程的内存模型,但主要的支持还是来自标准库。
   新的标准库提供了一个线程类(std::thread)来运行一个新线程，它带有一个函数对象参数和一系列可选的传递给函数对象的参数。通过std::thread::join()支持的线程连接操作可以让一个线程直到另一个线程执行完毕才停止。std:thread::native_handle()成员函数提供了对底层本地线程对象的可能且合理的平台相关的操作
+
   
+
+* noexcept 关键字
+
+  noexcept修饰的函数不会抛出异常
+
+  如果在运行时，noexcept函数向外抛出了异常，程序会直接终止，调用terminate()函数，函数内部会调用abort()函数终止程序。
+
+  使用noexcept 可以有效阻止异常的传播与扩散。
+
+  移动构造函数和析构函数 鼓励使用noexcept。
+
+
 * emplace函数的加入
 
   emplace_front()对应push_front()函数
@@ -1018,7 +1134,7 @@ C++的强制转换表面上看起来功能强大什么都能转，但是转化�
   char a[] = "hello world";
   char *p = a;
   sizeof(a); //12字节
-  sizeof(p); //4个字节
+  sizeof(p); //4个字节 或者8个字节  根据系统位数决定
   ```
 
 * 指针函数  和  指向函数的指针
@@ -1071,7 +1187,7 @@ void f1()
   }
   ```
   
-  **是否可以做函数参数**
+  **是否可以做函数参数**										
 
   宏定义不能作为参数传递给函数
 
@@ -1126,6 +1242,16 @@ void f1()
 * const参数传递和函数返回值
 
   值传递一般不需要const修饰  函数会自动产生临时变量复制实参值
+
+  ```c++
+  int func(const int a) {}
+  int func(int a) {}  //这两个函数是等价的 没有进行函数重载 因为顶层的const参数无法与没有顶层的const参数区分
+  
+  int func(int& a) {} //函数作用于a的引用
+  int func(const int& a) {}  //新函数 函数作用于常量引用
+  int func(int* a) {} //新函数  作用于指向a的指针
+  int func(const int* a) {} //新函数 作用于指向常量a的指针
+  ```
 
   const 修饰指针和引用 可以防止参数和引用被修改
 
@@ -1200,10 +1326,10 @@ a = a + 2;//a = 2
   int main(void) {
       A* ptr = nullptr; //建立空对象指针 不会调用构造函数
       
-      A -> fun1(); //成功调用  fun1是静态成员函数，只能访问类中的静态成员变量，类中的静态成员变量为整个类所共有，所以调用静态成员函数的时候，不需要传递this指针隐式参数。所以空对象指针可以正常调用静态成员函数。
-      A -> fun2(); //成功调用 fun2是成员函数，需要传递隐式指针参数，但是函数体内并未使用这个隐式指针 去调用非静态的成员变量 所以空对象指针可以正常调用这个函数。
-      A -> fun3(); //报错  函数体内需要使用this指针去调用num  但是ptr是空的  ptr ->num 非法 会报错
-      A -> fun4(); //报错 fun4是虚函数 有虚函数的类会自动生成一个成员变量即虚表指针 调用虚函数的时候 需要使用虚表指针  因为虚表指针是成员变量  所以需要传递隐式指针并使用  而ptr是空的 则会报错
+      ptr -> fun1(); //成功调用  fun1是静态成员函数，只能访问类中的静态成员变量，类中的静态成员变量为整个类所共有，所以调用静态成员函数的时候，不需要传递this指针隐式参数。所以空对象指针可以正常调用静态成员函数。
+      ptr -> fun2(); //成功调用 fun2是成员函数，需要传递隐式指针参数，但是函数体内并未使用这个隐式指针 去调用非静态的成员变量 所以空对象指针可以正常调用这个函数。
+      ptr -> fun3(); //报错  函数体内需要使用this指针去调用num  但是ptr是空的  ptr ->num 非法 会报错
+      ptr -> fun4(); //报错 fun4是虚函数 有虚函数的类会自动生成一个成员变量即虚表指针 调用虚函数的时候 需要使用虚表指针  因为虚表指针是成员变量  所以需要传递隐式指针并使用  而ptr是空的 则会报错
   }
   ```
 ### 44. STL容器的线程安全性  不是很好理解
@@ -1250,8 +1376,9 @@ a = a + 2;//a = 2
 
   ```c++
   int main(void) {
+      //存放该类型函数的数据结构为栈
       _onexit(fun1); //必须是int类型返回值且无参的函数  无论放在main中的哪个位置 都是最后执行的
-      _onexit(fun2); //且执行的顺兴是先进后出的  先执行fun2 再执行fun1
+      _onexit(fun2); //且执行的顺序是先进后出的  先执行fun2 再执行fun1
       cout << "end" << endl;
   }
   int fun1() {
@@ -1262,6 +1389,554 @@ a = a + 2;//a = 2
       cout << "2" << endl;
   }
   ```
+### 48.实现一个string类 
+
+```c++
+class String {
+private:
+    char *m_data;  //动态分配内存
+public:
+    String(const char* str == nullptr); //构造函数 考虑参数为空的情况
+    ~String(); //析构函数
+    String(const String& other); //为什么拷贝构造函数的参数为引用，这是避免使用拷贝构造死循环。当参数不是引用时，调用拷贝构造函数时形参与实参的结合 会再一次调用拷贝构造函数 进入无尽的循环中。
+    String& operator=(const String& other); //拷贝赋值函数
+    String(String &&other); //移动构造函数
+    String& operator=(String &&other); //移动赋值函数
+}; 
+
+String::String(const char* str) {
+    if(str == nullptr) {
+        m_data = new char[1];
+        *m_data = '\0';
+    }
+    else {
+        int len = strlen(str);
+        m_data = new char[len+1];
+        strcpy(m_data, str);
+    }
+}
+
+String::~String() {
+    delete[] m_data;
+}
+
+String::String(const String &other) {
+    int len = strlen(other.m_data);
+    m_data = new char[len+1];
+    strcpy(m_data, other.m_data);
+}
+
+String& String::operator=(const String &other) {
+    if(this != other) {
+        if(!m_data) delete[] m_data;
+        int len = strlen(other.m_data);
+        m_data = new char[len+1];
+        strcpy(m_data, other.data);
+    }
+    return *this;
+}
+
+String::String(String &&other) {
+    m_data = other.m_data;
+    other.m_data = nullptr;
+}
+
+String& String::operator=(String &&other) {
+    if(this != &other) {
+        if(!m_data) delete[] m_data;
+        m_data = other.data;
+        other.data = nullptr;
+	}
+    return *this;
+}
+```
+
+​	
+
+### 49. 多线程编程
+
+```c++
+#include<thread>
+using namespace std;
+
+void myFunc() {
+    
+}
+
+int main() {
+    thread tid1;//创建一个线程对象 但是没有相关联的线程
+    thread tid2(myFunc); //创建一个线程对象 并传递函数指针
+    
+    //thread和unique_ptr一样 都不支持赋值操作，支持移动操作
+    tid2 = move(tid1); //tid2不再有相关联的执行线程 将线程的所有权转移给了tid1
+    
+    ------
+        
+    thread tid1(myFunc);
+    thread tid2(myFunc);
+    
+    //在线程对象析构前，未显示的结合或分离线程，程序就会被终止
+    //显示的结合一个线程，主线程中断，等待子线程结束，然后继续向下运行
+    tid1.join();
+    //显示的分离一个线程，主线程将不等待子线程结束，直接继续向下运行
+    tid2.detach();
+    
+    ------
+    
+    int a = 10;
+    int b = 10;
+    thread tid1(myFunc1,a,b);
+    thread tid2(myFunc2,&a,ref(b)); //给线程传递引用参数时，需要使用&value或ref(value)显示指出传递的是引用，因为thread是模板类，需要根据传入的实参进行推导形参。
+    
+    tid1.join();
+    tid2.join();
+    
+    tid2.detach(myFunc,&a,ref(b));//给分离的线程传递自动变量的引用或指针时，要确保在线程执行过程中变量一直有效。
+    
+}
+```
+
+
+
+```c++
+//线程间访问共享数据
+//1.原子操作
+atomic<int> num = 0; //atomic模板类创建的变量的操作具有原子性，即不可分割性，仅支持一个线程同时访问
+//2.互斥锁 
+mutex m; //mutex模板类创建的锁变量 能够对临界区的资源进行加锁 当一个线程抢到了锁 在未解锁之前 其他任何线程都不能加锁这个被锁上的临界区资源
+int n = 0;
+
+void func1() {
+    num ++:
+    m.lock();
+    n ++;
+    m.unlock();
+}
+void fun2() {
+    num ++;
+    m.lock();
+    n ++:
+    m.unlock();
+}
+
+int main(void) {
+    thread tid1(func1);
+    thread tid2(func2);
+    tid1.join();
+    tid2.join();
+}
+
+//在使用互斥锁的时候，避免互斥锁的相互嵌套，防止发生死锁。
+mutex m1;
+mutex m2;
+int num1 = 0;
+int num2 = 0;
+int main(void) {
+    //tid1和tid2抢占资源 tid1抢占了m1锁 tid2抢占了m2锁  tid1试图对m2加锁 tid2试图对m1加锁 但是m1和m2都处于加锁阶段，就会产生死锁。
+    thread tid1([](){
+        m1.lock();
+        num1 ++;
+        m2.lock();
+        num2 ++;
+        m1.unlock();
+        m2.unlock();
+    });
+    
+    thread tid2([](){
+        m2.lock();
+        num2 ++:
+        m1.lock();
+        num1 ++:
+        m2.unlock();
+        m1.unlock();
+    });
+    
+    tid1.join();
+    tid2.join();
+}
+```
+
+
+
+### 50. socket编程
+
+网络进程通信使用（ip地址，协议，端口）可以标识网络中的进程。
+
+一般来说，网络进程使用socket通信。
+
+* socket的基本模式：open -> write / read ->close
+
+* 在Linux中socket被认为是文件的一种，在网络传输中可以使用与文件IO相关的函数。两个主机间的通信，实际上是两个socket文件的相互读写。
+
+* socket编程有三种：
+
+  1. sock_stream 流式套接字 
+
+  2. sock_dgram  数据报套接字
+
+  3. sock_raw  原始套接字
+
+基于TCP的socket编程采用sock_stream    
+
+服务器编程的步骤：
+
+1. 加载套接字库，创建套接字， 确定IP类型和套接字类型（socket()）
+2. 绑定套接字到一个IP地址和一个端口上（bind()）
+3. 将套接字设置为监听模式 等待连接请求（listen()）
+4. 请求到来后，接受连接请求，返回一个用于此次连接的套接字（accept()）
+5. 用返回的套接字和客户端进行通信（send() / recv() ）
+6. 返回，等待另一连接请求
+7. 关闭套接字，关闭加载的套接字库
+
+客户端编程的步骤：
+
+1. 加载套接字库，创建套接字
+2. 向服务器发出连接请求（connect（））
+3. 和服务器端进行通信（send() / recv() ）
+4. 关闭套接字，关闭加载的套接字库
+
+### 51. 回调函数
+
+回调函数就是一个通过函数指针调用的函数。将函数的指针（地址）作为参数传递给另一个函数，当这个指针被用来调用所指向的函数时，这就是回调函数。
+
+```C++
+typedef int(*ptr) (int, int);  //使用宏定义的方式 申明一个函数指针
+
+int add(int a, int b, ptr p) { //调用回调函数的函数  加上一个函数指针的参数
+    return p(a,b);
+}
+
+int callback(int a, int b) { //回调函数 普通的一个函数
+    return a + b;
+}
+
+int main() {
+    int res = add(a, b, callback);
+    return 0;
+}
+```
+
+为什么C++类中的回调函数是静态的：
+
+* 因为回调函数一般是用于解耦的，所以在调用回调函数的类中，并不会有回调函数所属类的对象。而静态成员是属于整个类所有的，所以只能将回调函数定义为静态成员函数，通过类名调用。
+
+### 52. 子类对象调用父类函数
+
+```c++
+class Base {
+private:
+    int val;
+public:
+    Base(int x) : val(x) {}
+    virtual void func1() {
+        cout << "Base_v" << endl;
+    }
+    void func2() {
+        cout << "Base_r" << endl;
+    }
+};
+
+class Drived : public Base {
+public:
+    Drived(int x) : Base(x) {}
+    void func1() {
+        cout << "Drived_v" << endl;
+    }
+    void func2() {
+        cout << "Drived_r" << endl;
+    }
+};
+
+int main() {
+    Base base(1);
+    Drived drived(2);
+    base.func1();
+    base.func2();
+    drived.func1();
+    drived.func2();
+    drived.Base::func1();
+    drived.Base::func2();  //子类对象调用父类对象的方法 调用结果与是否为虚函数 无关
+
+    Base* p = new Drived(3);  //父类指针指向子类对象
+    p ->func1();  //调用子类的虚函数
+    p ->func2();  //因为父类没有定义虚函数  则根据指针的指向只会调用父类函数
+    p ->Base::func1(); //调用父类的虚函数
+    p ->Base::func2(); //调用父类的普通函数 
+
+    return 0;
+}
+```
+
+### 53. 类的三种权限和三种继承方式
+
+* 访问权限：
+
+  **public** 可以被任意实体访问，可以被外部所查看，对象可以直接调用成员变量
+
+  **protected** 只允许子类（无论子类是何种继承方式）和本类的成员函数访问
+
+  **private** 只允许本类的成员函数访问
 
   
+
+* 继承方式：  
+
+  **public**继承  不会改变基类成员的访问权限。 派生类可以直接访问父类的public、protected成员
+
+  **protected**继承  将基类成员的public访问权限改为protected，其他访问权限不变。派生类内依旧可以直接访问父类的public、protected成员。
+
+  **private**继承 将基类成员的所有访问权限变为private。 派生类内部依旧可以直接访问父类的public、protected成员。
+
+  
+
+* 派生类**对象**仅当public派生时，才可以直接访问和修改父类的public成员。
+
+### 54. shared_ptr的简单实现
+
+```c++
+shared_ptr<T> ptr(new T); //使用shared_ptr对象 托管一个new运算符返回的指针
+//ptr可以像T*类型的指针一样使用，即*ptr就是用new动态分配的那个对象
+shared_ptr<T> ptr_1 = ptr;
+shared_ptr<T> ptr_2 = ptr;
+//多个shared_ptr可以共同托管一个指针p,当所有曾经托管p的shared_ptr对象都解除了对其的托管时，就会执行delete p
+```
+
+**shared_ptr**类实现：
+
+```c++
+template<typename T>
+class Shared_ptr {
+private:
+    T* ptr; //托管对象
+    int* count; //引用计数对象
+    mutex* pMutex; //互斥锁对象
+    
+    //释放管理对象
+    void release() {
+    	bool flag = false;
+        
+        pMutex ->lock();
+        if((*count)-- == 0) {
+            delete ptr;
+            delete count;
+            flag = true;
+        }
+        pMutex ->unlock();
+        
+        if(flag == true)delete pMutex;
+    }
+    
+    //增加引用计数
+    void addCount() {
+        pMutex ->lock();
+        (*count) ++;
+        pMutex ->unlock();
+    }
+    
+public:
+    //构造函数
+    Shared_ptr(T* p = nullptr) : ptr(p), count(new int(1)), pMutex(new mutex) {}
+    
+    //析构函数
+    ~Shared_ptr() {
+        release();
+    }
+    
+    //拷贝构造函数
+    Shared_ptr(const Shared_ptr& s) : ptr(s.ptr), count(s.count), pMutex(s.pMutex) {
+        addCount();
+    } 
+    
+    //拷贝赋值函数
+    Shared_ptr& operator=(const Shared_ptr& s) {
+        if(ptr != s.ptr) {
+            release(); //释放掉本身
+            
+            ptr = s.ptr;
+            count = s.count;
+            pMutex = s.pMutex;
+            
+            addCount();
+        }
+    }
+    
+    //返回引用计数
+    int reCount() {
+        return *count;
+    }
+    
+    T* get() {
+        return ptr;
+    }
+    T& operator*() {
+        return *ptr;
+    }
+    T& operator->() {
+        return ptr;
+    }
+}
+```
+
+### 55. 友元类和友元函数
+
+* 有些函数不是类的一部分，需要频繁的访问类的数据成员，这时需要将这些函数定义为该类的友元函数。
+
+* 友元的作用是提高了程序的运行效率（减少了类型检查和安全性检查），破坏了类的封装和隐藏
+
+* 友元函数的声明可以放在类的任何部分，不会有区别
+
+* 一个函数可以是多个类的友元函数
+
+**友元类**
+
+当希望一个类可以存取另一个类的私有成员时，可以将该类声明为另一个类的友元类。
+
+```c++
+class A {
+public:
+    friend class B;
+}
+```
+
+* 友元类不能被继承
+
+* 友元关系是单向的
+
+* 友元关系是不能传递的
+
+  
+
+### 56. 实现一个vec类
+
+```C++
+//空间配置器
+template<typename T>
+struct Myalloc {
+    //申请空间
+    T* allocator(size_t size) {
+        return (T*)malloc(size * sizeof(T));
+    }
+    //释放空间
+    void delallocator(T* p) {
+        free(p);
+    }
+    //调用构造函数
+    void counstruct(T* p, const T& val) {
+        p = new T(val);
+    }
+    //调用析构函数
+    void destory(T* p) {
+        p ->~T();
+    }
+};
+
+//vec类实现
+template<typename T, typename Alloc = Myalloc<T>>
+class Vector {
+private:
+    T* first;
+    T* last;
+    T* end;
+    Alloc alloc;
+
+    //内存扩容
+    void expand() {
+        size_t len = last - first;
+        size_t size = end - first;
+
+        T* temp = alloc.allocator(2*size); //申请两倍的空间
+        for(int i = 0; i < len; i ++) alloc.construct(temp + i, first[i]);  //拷贝元素
+
+        des(); //释放原来的内存
+
+        first = temp;
+        last = first + len;
+        end = first + 2*size;
+    }
+
+    //释放内存
+    void des() {
+        for(T* p = first; p != last; p ++) alloc.destory(p); //析构元素
+        alloc.delallocator(first); //释放内存
+
+        first = nullptr;
+        last = nullptr;
+        end = nullptr;
+    }
+
+    //拷贝元素
+    void copy(const Vector& vec) {
+        size_t len = vec.last - vec.first; //数组长度
+        size_t size = vec.end - vec.first; //数组空间大小
+
+        first = alloc.allocator(size); //先申请一样大小的空间
+        for(int i = 0; i < len; i ++) alloc.construct(first + i, vec.first[i]); //再调用构造函数
+
+        last = first + len;
+        end = first + size;
+    }
+public:
+    //构造函数
+    Vector(size_t size = 1) {
+        first = alloc.allocator(size); //申请内存空间
+        last = first;
+        end = first + size;
+    }
+
+    //析构函数
+    ~Vector() {
+        des();
+    }
+
+    //拷贝构造函数
+    Vector(const Vector& vec) {
+        copy(vec);
+    }
+
+    //拷贝赋值函数
+    Vector& operator=(const Vector& vec) {
+        if(*this == vec) return *this;
+
+        if(first != nullptr) {
+            des();
+        }
+
+        copy(vec);
+        return *this;
+    }
+
+    bool empty()const {
+        return first == last;
+    }
+
+    bool full()const {
+        return last == end;
+    }
+
+    size returnSize()const {
+        return last - first;
+    }
+    //重写中括号
+    T& operator[](int index)const {
+        if(index >= 0 && index < returnSize()) return first[index];
+        return -1;
+    }
+
+    //在尾部插入数据
+    void push_back(const T& val) {
+        if(full()) expand();
+        alloc.construct(last, val);
+        last ++:
+    }
+
+    //在尾部弹出数据
+    void pop_back() {
+        if(empty()) return;
+        last --;
+        alloc.destory(last);
+    }
+};
+```
+
+### 57.
 

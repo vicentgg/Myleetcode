@@ -107,6 +107,49 @@ public:
 
         return head;
     }
+
+    //快排
+    void swap(ListNode* a, ListNode* b) {
+        if(a ->val == b ->val) return;
+        a ->val ^= b ->val;
+        b ->val ^= a ->val;
+        a ->val ^= b ->val;
+    }
+
+    void quickSort(ListNode* left, ListNode* right) {
+        if(right == left || left == nullptr || right == nullptr) return;
+        ListNode* p = left; //遍历指针
+        ListNode* cur = left; //记录大于标记点的节点位置
+        ListNode* pre = nullptr; //记录cur的前驱节点
+
+        int temp = right ->val;
+        while(p != right) {
+            if(p ->val < temp) {
+                swap(cur, p);
+                pre = cur;
+                cur = cur ->next;
+            }
+            p = p ->next;
+        }
+
+        if(cur != right) {
+            swap(cur, right);
+            cur = cur ->next;
+        }
+
+        quickSort(left, pre);
+        quickSort(cur, right);
+
+    }
+
+    ListNode* sortList(ListNode* head) {
+        if(head == nullptr) return head;
+        ListNode* tail = head;
+        while(tail ->next && tail) tail = tail ->next;
+
+        quickSort(head, tail);
+        return head;
+    }
 };
 
 int main(void) {

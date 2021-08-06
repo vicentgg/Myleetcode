@@ -19,7 +19,6 @@ public:
         stack<TreeNode*> sk;
         TreeNode* p = root;
         int ans;
-        TreeNode* temp;
         while(!sk.empty() || p != nullptr) {
             while(p != nullptr) {
                 sk.push(p);

@@ -3,6 +3,7 @@
 #include<algorithm>
 #include<unordered_map>
 #include<map>
+#include<list>
 
 using namespace std;
 
@@ -34,5 +35,6 @@ public:
 };
 
 int main(void) {
-
+    list<int> a;
+    
 }

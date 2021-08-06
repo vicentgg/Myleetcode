@@ -103,7 +103,7 @@ public:
         if(low < high) {
             int pivotpos = Partiton(nums, low, high);
             QuickSort(nums, low, pivotpos - 1);
-            QuickSort(nums, pivotpos + 1, high);
+            QuickSort(nums, pivotpos + 1, high);  
         }
     }
 

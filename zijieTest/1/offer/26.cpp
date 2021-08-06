@@ -53,30 +53,25 @@ public:
         return root;
     }
     //2.使用栈
+
     TreeNode* mirrorTree(TreeNode* root) {
         if(root == nullptr) return root;
         stack<TreeNode*> sTree;
         TreeNode* start = root;
-        while (start != nullptr)
-        {
-            sTree.push(start);
-            start = start ->left;
-        }
+        
 
         //找到最左子树 遍历栈 开始依次交换左右子树
-        while(!sTree.empty()) {
+        while(!sTree.empty() || start != nullptr) {
+
+            while(start != nullptr) {
+                sTree.push(start);
+                start = start ->left;
+            }
+
             TreeNode* temp = sTree.top();
             sTree.pop();
-
-            //在交换左右子树之前  先将右子树的所有左子树压入栈
-            //将右子树中的所有左子树 压入栈
-            if(temp ->right) {
-                TreeNode* rStart = temp ->right;
-                while(rStart != nullptr) {
-                    sTree.push(rStart);
-                    rStart = rStart ->left;
-                }
-            }
+            
+            start = temp ->right;
 
             //交换左右子树
             TreeNode* t = temp ->left;
@@ -87,6 +82,7 @@ public:
         return root;
     }
 
+};
     //28.对称的二叉树
     bool dfs(TreeNode* left, TreeNode* right) {
         if(!left || !right) return !left && !right; //都不存在时返回true 只有一方存在时 返回false
