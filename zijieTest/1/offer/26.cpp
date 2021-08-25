@@ -82,8 +82,12 @@ public:
         return root;
     }
 
-};
+
+
+
     //28.对称的二叉树
+
+    //递归方式实现
     bool dfs(TreeNode* left, TreeNode* right) {
         if(!left || !right) return !left && !right; //都不存在时返回true 只有一方存在时 返回false
         if(left ->val != right ->val) return false;
@@ -91,10 +95,35 @@ public:
         return dfs(left ->left, right ->right) && dfs(left ->right, right ->left);
     }
 
+    //迭代方式实现
+    bool isSyTree(TreeNode* root) {
+        queue<TreeNode*> sq;
+        sq.push(root ->left);
+        sq.push(root ->right);
+
+        while(!sq.empty()) {
+            TreeNode* leftNode = sq.front(); sq.pop();
+            TreeNode* rightNode = sq.front(); sq.pop();
+
+            if(!leftNode && !rightNode) continue;
+            if(!leftNode || !rightNode || leftNode ->val != rightNode ->val) return false;
+
+            sq.push(leftNode ->left);
+            sq.push(rightNode ->right);
+            sq.push(leftNode ->right);
+            sq.push(rightNode ->left);
+        }
+    }
+
+
     bool isSymmetric(TreeNode* root) {
         if(root == nullptr) return true;
         return dfs(root ->left, root ->right);
+        // return isSyTree(root);
     }
+
+
+
 
     //32-1.层序遍历二叉树
     vector<int> levelOrder(TreeNode* root) {

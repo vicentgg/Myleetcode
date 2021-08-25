@@ -95,7 +95,7 @@ public:
             p = head;
             while(p ->next != q) {
                 if(p ->next ->val < p ->val) {
-                    swap(p ->next ->val, p ->val);
+                    swap(p ->next, p);
                     flag = true;
                 }
                 p = p ->next;
